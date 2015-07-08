@@ -18,7 +18,7 @@ Poll and publish quote changes to a Redis server.
 
 See `conf/example.json.sample` for an example config
 
-    pricebroadcaster-go -c config/file.json
+    pricebroadcaster-go -config conf/file.json
 
 ## License
 
