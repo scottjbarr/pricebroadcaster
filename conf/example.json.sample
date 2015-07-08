@@ -1,0 +1,29 @@
+{
+  "logfile": "/home/you/var/log/your.log"
+
+  "redis" : {
+    "host": "127.0.0.1",
+    "port": 6379,
+    "room": "some:redis_key",
+    "db": 0
+  },
+
+  "sleep_time": 1000,
+
+  "symbols": [
+    "SPY",
+    "^GSPC",
+    "^IXIC",
+    "^HSI",
+    "^AORD",
+    "^N225",
+    "^STI",
+    "^FTSE",
+    "^GDAXI",
+    "EURUSD=X",
+    "USDJPY=X",
+    "GBPUSD=X",
+    "USDCHF=X",
+    "USDAUD=X"
+  ]
+}
