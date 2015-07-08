@@ -23,7 +23,10 @@ func publish(quote *yahoofinance.Quote) {
 
 	js, _ := json.Marshal(quote)
 
-	redisClient.Send("PUBLISH", config.Redis.Room, js)
+	// format the JSON with a root element
+	price := fmt.Sprintf("{price:%s}", js)
+
+	redisClient.Send("PUBLISH", config.Redis.Room, price)
 	redisClient.Flush()
 }
 
