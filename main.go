@@ -19,8 +19,6 @@ func usage() {
 
 // Publish a new Quote to the Redis server.
 func publish(quote *yahoofinance.Quote) {
-	log.Printf("publishing : %v", *quote)
-
 	js, _ := json.Marshal(quote)
 
 	// format the JSON with a root element
