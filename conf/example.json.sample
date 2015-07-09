@@ -1,5 +1,5 @@
 {
-  "logfile": "/home/you/var/log/your.log"
+  "logfile": "/home/you/var/log/your.log",
 
   "redis" : {
     "host": "127.0.0.1",
