@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/garyburd/redigo/redis"
-	"gopkg.in/scottjbarr/yahoofinance.v3"
+	"github.com/scottjbarr/yahoofinance"
 )
 
 // Display a usage message.
@@ -35,7 +35,12 @@ func poll(config *Config) {
 
 	for true {
 		// get quotes
-		quotes := client.GetQuotes(config.Symbols)
+		quotes, err := client.GetQuotes(config.Symbols)
+
+		if err != nil {
+			log.Printf("ERROR : %v", err)
+			continue
+		}
 
 		for _, quote := range quotes {
 			if cache[quote.Symbol] != quote {
