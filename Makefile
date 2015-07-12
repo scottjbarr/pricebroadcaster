@@ -1,14 +1,17 @@
 # See http://peter.bourgon.org/go-in-production/
 GO ?= go
 CONFIG_FILE = ./conf/local.json
-BIN = pricebroadcaster-go
+BIN = ./pricebroadcaster-go
 
-all: build
+all: clean build
 
 build:
 	$(GO) build
 
-run:
+run: build
+	$(BIN) -config $(CONFIG_FILE)
+
+run-dev:
 	$(GO) run main.go config.go redis.go -config $(CONFIG_FILE)
 
 test:
