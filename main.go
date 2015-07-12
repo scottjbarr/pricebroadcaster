@@ -19,10 +19,11 @@ func usage() {
 
 // Publish a new Quote to the Redis server.
 func publish(quote *yahoofinance.Quote) {
-	js, _ := json.Marshal(quote)
 
 	// format the JSON with a root element
 	price := fmt.Sprintf("{price:%s}", js)
+	js, _ := json.Marshal(quote)
+	price := fmt.Sprintf("{\"price\":%s}", js)
 
 	redisClient.Send("PUBLISH", config.Redis.Room, price)
 	redisClient.Flush()
