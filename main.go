@@ -8,7 +8,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/garyburd/redigo/redis"
 	"github.com/scottjbarr/yahoofinance"
 )
 
@@ -19,14 +18,26 @@ func usage() {
 
 // Publish a new Quote to the Redis server.
 func publish(quote *yahoofinance.Quote) {
+	log.Printf("%v", *quote)
+
+	// create the Redis client
+	c, err := Connect(&config.Redis)
+
+	if c != nil {
+		defer c.Close()
+	}
+
+	if err != nil {
+		log.Printf("ERROR getting redis connection : %v", err)
+		return
+	}
 
 	// format the JSON with a root element
-	price := fmt.Sprintf("{price:%s}", js)
 	js, _ := json.Marshal(quote)
 	price := fmt.Sprintf("{\"price\":%s}", js)
 
-	redisClient.Send("PUBLISH", config.Redis.Room, price)
-	redisClient.Flush()
+	c.Send("PUBLISH", config.Redis.Room, price)
+	c.Flush()
 }
 
 // Repeatedly poll for Quote changes.
@@ -39,7 +50,7 @@ func poll(config *Config) {
 		quotes, err := client.GetQuotes(config.Symbols)
 
 		if err != nil {
-			log.Printf("ERROR : %v", err)
+			log.Printf("ERROR getting quote : %v", err)
 			continue
 		}
 
@@ -55,7 +66,6 @@ func poll(config *Config) {
 	}
 }
 
-var redisClient redis.Conn
 var config *Config
 
 func main() {
@@ -84,10 +94,6 @@ func main() {
 	log.SetOutput(f)
 
 	log.Printf("Loaded config file %v with config %v", *configFile, *config)
-
-	// create the Redis client
-	redisClient = Connect(&config.Redis)
-	defer redisClient.Close()
 
 	poll(config)
 }
