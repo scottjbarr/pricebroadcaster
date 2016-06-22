@@ -18,7 +18,7 @@ func usage() {
 
 // Publish a new Quote to the Redis server.
 func publish(quote *yahoofinance.Quote) {
-	log.Printf("%v", *quote)
+	// log.Printf("%v", *quote)
 
 	// create the Redis client
 	c, err := Connect(&config.Redis)
@@ -45,7 +45,7 @@ func poll(config *Config) {
 	cache := make(map[string]yahoofinance.Quote)
 	client := yahoofinance.CreateClient()
 
-	for true {
+	for {
 		// get quotes
 		quotes, err := client.GetQuotes(config.Symbols)
 
@@ -81,19 +81,7 @@ func main() {
 	// parse the config file
 	config = ParseConfig(*configFile)
 
-	f, err := os.OpenFile(
-		config.LogFile,
-		os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-
-	if err != nil {
-		fmt.Printf("Error opening file: %v", err)
-	}
-	defer f.Close()
-
-	// send log output to the log file
-	log.SetOutput(f)
-
-	log.Printf("Loaded config file %v with config %v", *configFile, *config)
+	log.Printf("Loaded config file %v with config %+v", *configFile, *config)
 
 	poll(config)
 }

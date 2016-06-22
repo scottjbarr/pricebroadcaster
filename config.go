@@ -14,8 +14,7 @@ type Redis struct {
 
 // Config top level configuration struct
 type Config struct {
-	LogFile   string `yaml:"logfile"`
-	SleepTime int    `yaml:"sleep_time"`
+	SleepTime int `yaml:"sleep_time"`
 	Redis
 	Symbols []string
 }
@@ -29,10 +28,7 @@ func ParseConfig(filename string) *Config {
 	}
 
 	var config Config
-
-	err = yaml.Unmarshal(yamlFile, &config)
-
-	if err != nil {
+	if err = yaml.Unmarshal(yamlFile, &config); err != nil {
 		panic(err)
 	}
 
