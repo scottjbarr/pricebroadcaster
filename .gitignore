@@ -2,7 +2,6 @@
 *.o
 *.a
 *.so
-pricebroadcaster-go
 
 # Folders
 _obj
@@ -24,4 +23,6 @@ _testmain.go
 *.exe
 *.test
 *.prof
-conf/*.json
+conf/*.env
+build
+dist
