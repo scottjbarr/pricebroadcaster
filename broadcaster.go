@@ -3,77 +3,81 @@ package pricebroadcaster
 import (
 	"encoding/json"
 	"fmt"
-	"log"
-	"time"
 
-	"github.com/garyburd/redigo/redis"
-	"github.com/scottjbarr/yahoofinance"
+	redigo "github.com/gomodule/redigo/redis"
+	"github.com/scottjbarr/pricebroadcaster/pkg/cache"
+	"github.com/scottjbarr/pricebroadcaster/pkg/models"
 )
 
 // Broadcaster is responsible for receiving and broadcasting
 // data
 type Broadcaster struct {
-	Config Config
-	redis  redis.Conn
+	Room      string
+	Publisher Publisher
+	Cache     cache.Cache
 }
 
 // New returns a new Broadcaster with the given Config
-func New(config Config) (*Broadcaster, error) {
-	conn, err := connect(config)
-
-	if err != nil {
-		return nil, fmt.Errorf("ERROR getting redis connection : %v", err)
-	}
-
+func New(room string, pub Publisher, cache cache.Cache) (*Broadcaster, error) {
 	return &Broadcaster{
-		Config: config,
-		redis:  conn,
+		Room:      room,
+		Publisher: pub,
+		Cache:     cache,
 	}, nil
 }
 
 // Start runs a Broadcaster
-func (b Broadcaster) Start() {
-	log.Printf("[Broadcaster] Starting with config %+v", b.Config)
-	defer b.redis.Close()
-
-	b.poll()
-}
-
-// polll for Quote changes, forever
-func (b Broadcaster) poll() {
-	cache := make(map[string]yahoofinance.Quote)
-	client := yahoofinance.CreateClient()
-
-	// duration to sleep for at the end of each loop
-	sleep := time.Duration(b.Config.SleepTime) * time.Millisecond
-
+func (b Broadcaster) Start(ch chan *models.OHLC) {
 	for {
-		// get quotes
-		quotes, err := client.GetQuotes(b.Config.Symbols)
-
-		if err != nil {
-			log.Printf("ERROR getting quotes : %v", err)
-			continue
-		}
-
-		for _, quote := range quotes {
-			if cache[quote.Symbol] != quote {
-				// quote has changed, publish it
-				cache[quote.Symbol] = quote
-				b.publish(&quote)
+		select {
+		case ohlc := <-ch:
+			if err := b.publish(ohlc); err != nil {
+				fmt.Printf("ERROR %v\n", err)
 			}
 		}
-
-		time.Sleep(sleep)
 	}
 }
 
 // publish a new Quote to the Redis server.
-func (b Broadcaster) publish(quote *yahoofinance.Quote) {
+func (b Broadcaster) publish(ohlc *models.OHLC) error {
 	// format the JSON with a root element
-	js, _ := json.Marshal(quote)
-	price := fmt.Sprintf("{\"price\":%s}", js)
+	data, err := json.Marshal(ohlc)
+	if err != nil {
+		return err
+	}
 
-	b.redis.Send("PUBLISH", b.Config.Redis.Room, price)
-	b.redis.Flush()
+	if err := b.Publisher.Publish(b.Room, data); err != nil {
+		return err
+	}
+
+	return b.Cache.Set(ohlc.Symbol, data)
+}
+
+type Publisher interface {
+	Publish(string, []byte) error
+}
+
+type RedisPublisher struct {
+	Pool *redigo.Pool
+}
+
+func NewRedisPublisher(pool *redigo.Pool) *RedisPublisher {
+	return &RedisPublisher{
+		Pool: pool,
+	}
+}
+
+func (p *RedisPublisher) Publish(key string, b []byte) error {
+	conn := p.Pool.Get()
+	defer conn.Close()
+
+	if _, err := conn.Do("PUBLISH", key, b); err != nil {
+		return err
+	}
+
+	if err := conn.Flush(); err != nil {
+		return err
+	}
+
+	return nil
 }

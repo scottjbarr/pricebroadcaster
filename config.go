@@ -16,6 +16,10 @@ type Redis struct {
 	Room string
 }
 
+func (r Redis) URL() string {
+	return fmt.Sprintf("redis://%s:%v", r.Host, r.Port)
+}
+
 // Config top level configuration struct
 type Config struct {
 	SleepTime int64
