@@ -1,20 +1,13 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
-	"os"
 
 	"github.com/gorilla/mux"
 	"github.com/scottjbarr/config"
 	"github.com/scottjbarr/pricebroadcaster/pkg/cache"
 	"github.com/scottjbarr/redis"
 )
-
-// usage prints usage details
-func usage() {
-	fmt.Printf("Usage : %s symbol\n", os.Args[0])
-}
 
 func main() {
 	cfg := Config{}

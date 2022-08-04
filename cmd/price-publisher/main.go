@@ -1,9 +1,7 @@
 package main
 
 import (
-	"fmt"
 	"log"
-	"os"
 	"time"
 
 	"github.com/scottjbarr/config"
@@ -14,11 +12,6 @@ import (
 	"github.com/scottjbarr/pricebroadcaster/pkg/publisher"
 	"github.com/scottjbarr/redis"
 )
-
-// usage prints usage details
-func usage() {
-	fmt.Printf("Usage : %s symbol\n", os.Args[0])
-}
 
 func main() {
 	cfg := Config{}
@@ -45,7 +38,6 @@ func main() {
 
 	go func() {
 		broadcaster.Start(ch)
-		// done <- err
 	}()
 
 	// start fetching and pushing prices

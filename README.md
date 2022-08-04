@@ -1,29 +1,47 @@
 # Price Broadcaster
 
-Poll and publish quote changes to a Redis server.
+Publish OHLC data to a Redis server.
+
+This repository doesn't provide price sources. To use this repository you'll need to wire up data
+sources.
+
+This repo is useful to me because I can push prices to any number of services.
 
 ## Testing
 
-    go test
+```
+$ go test
+```
 
 ## Build
 
-    go build
-
-## Install
-
-    go get github.com/scottjbarr/pricebroadcaster-go
+```
+$ go build
+```
 
 ## Running
 
-See `conf/example.json.sample` for an example config
+Examples for how you could use this repository are provided.
 
-    pricebroadcaster-go -config conf/file.json
+See [the example config](conf/dev.env.example) if you want to run them.
+
+
+```
+$ source conf/your.env && go run cmd/price-publisher/main.go
+```
+
+A HTTP service to retrieve the latest price for a symbol.
+
+There is only one endoint `GET /api/v1/prices/{symbol}`
+
+```
+$ source conf/your.env && go run cmd/price-http/main.go
+```
 
 ## License
 
 The MIT License (MIT)
 
-Copyright (c) 2015 Scott Barr
+Copyright (c) 2015-2022 Scott Barr
 
-See [LICENSE.md](LICENSE.md)
+See [LICENSE](LICENSE)

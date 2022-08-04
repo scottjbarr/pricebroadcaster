@@ -1,29 +1,32 @@
 GO ?= go
 
-# command to build and run on the local OS.
-GO_BUILD = go build
-
 # command to compiling the distributable. Specify GOOS and GOARCH for
 # the target OS.
 GO_DIST = GOOS=linux GOARCH=amd64 go build
 
-.PHONY: dist
+.PHONY: dist build
 
 all: clean build
 
 dist:
 	mkdir -p dist
-	$(GO_DIST) -o build/pricebroadcaster cmd/pricebroadcaster/main.go
+	$(GO_DIST) -o dist/pricebroadcaster cmd/pricebroadcaster/main.go
 
 build:
 	mkdir -p build
-	$(GO_BUILD) -o build/pricebroadcaster cmd/pricebroadcaster/main.go
+	$(GO) build -o build/pricebroadcaster cmd/pricebroadcaster/main.go
 
-run:
-	go run cmd/pricebroadcaster/main.go
+run-example-publisher:
+	go run cmd/price-publisher/main.go
+
+run-example-http:
+	go run cmd/price-http/main.go
 
 test:
-	$(GO) test
+	$(GO) test ./...
+
+install:
+	$(GO) install ./...
 
 clean:
 	rm -rf build dist
