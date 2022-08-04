@@ -6,10 +6,12 @@ import (
 	"os"
 	"time"
 
-	"github.com/scottjbarr/pricebroadcaster"
+	"github.com/scottjbarr/config"
+	"github.com/scottjbarr/pricebroadcaster/pkg/broadcaster"
 	"github.com/scottjbarr/pricebroadcaster/pkg/cache"
 	"github.com/scottjbarr/pricebroadcaster/pkg/clients"
 	"github.com/scottjbarr/pricebroadcaster/pkg/models"
+	"github.com/scottjbarr/pricebroadcaster/pkg/publisher"
 	"github.com/scottjbarr/redis"
 )
 
@@ -19,34 +21,27 @@ func usage() {
 }
 
 func main() {
-	cfg, err := pricebroadcaster.NewConfig()
-	if err != nil {
+	cfg := Config{}
+	if err := config.Process(&cfg); err != nil {
 		panic(err)
 	}
 
 	log.Printf("Starting with config %+v", cfg)
 
-	bind := os.Getenv("BIND")
-	if len(bind) == 0 {
-		panic("BIND not specified")
-	}
-
-	pool, err := redis.NewPool(cfg.Redis.URL())
+	pool, err := redis.NewPool(cfg.RedisURL)
 	if err != nil {
 		panic(err)
 	}
 
 	cache := cache.NewRedisCache(pool)
-	pub := pricebroadcaster.NewRedisPublisher(pool)
+	pub := publisher.NewRedisPublisher(pool)
 
-	broadcaster, err := pricebroadcaster.New(cfg.Room, pub, cache)
+	broadcaster, err := broadcaster.New(cfg.Room, pub, cache)
 	if err != nil {
 		panic(err)
 	}
 
 	ch := make(chan *models.OHLC, 1)
-
-	// done := make(chan error, 1)
 
 	go func() {
 		broadcaster.Start(ch)
@@ -68,7 +63,7 @@ func main() {
 	}
 }
 
-// type Config struct {
-// 	Bind     string `envconfig:"BIND"`
-// 	RedisURL string `envconfig:"REDIS_URL"`
-// }
+type Config struct {
+	RedisURL string `envconfig:"REDIS_URL"`
+	Room     string `envconfig:"ROOM"`
+}

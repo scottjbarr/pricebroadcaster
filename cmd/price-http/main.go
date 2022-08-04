@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/gorilla/mux"
-	"github.com/scottjbarr/pricebroadcaster"
+	"github.com/scottjbarr/config"
 	"github.com/scottjbarr/pricebroadcaster/pkg/cache"
 	"github.com/scottjbarr/redis"
 )
@@ -17,17 +17,12 @@ func usage() {
 }
 
 func main() {
-	cfg, err := pricebroadcaster.NewConfig()
-	if err != nil {
+	cfg := Config{}
+	if err := config.Process(&cfg); err != nil {
 		panic(err)
 	}
 
-	bind := os.Getenv("BIND")
-	if len(bind) == 0 {
-		panic("BIND not specified")
-	}
-
-	pool, err := redis.NewPool(cfg.Redis.URL())
+	pool, err := redis.NewPool(cfg.RedisURL)
 	if err != nil {
 		panic(err)
 	}
@@ -41,7 +36,7 @@ func main() {
 	r := mux.NewRouter()
 
 	r.HandleFunc("/api/v1/prices/{symbol}", server.pricesHandler)
-	if err := http.ListenAndServe(bind, r); err != nil {
+	if err := http.ListenAndServe(cfg.Bind, r); err != nil {
 		panic(err)
 	}
 }
@@ -57,12 +52,23 @@ func (s server) pricesHandler(w http.ResponseWriter, r *http.Request) {
 
 	body, err := s.cache.Get(symbol)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		status := http.StatusInternalServerError
+		if err == cache.ErrCacheMiss {
+			status = http.StatusNotFound
+		}
+
+		w.WriteHeader(status)
 		w.Write([]byte(err.Error()))
+
 		return
 	}
 
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-	//fmt.Fprintf(w, body)
 	w.Write([]byte(body))
+}
+
+type Config struct {
+	RedisURL string `envconfig:"REDIS_URL" required:"true"`
+	Room     string `envconfig:"ROOM" required:"true"`
+	Bind     string `envconfig:"BIND" required:"true"`
 }
