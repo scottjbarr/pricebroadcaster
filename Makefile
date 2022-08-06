@@ -10,11 +10,13 @@ all: clean build
 
 dist:
 	mkdir -p dist
-	$(GO_DIST) -o dist/pricebroadcaster cmd/pricebroadcaster/main.go
+	$(GO_DIST) -o dist/price-publisher cmd/price-publisher/main.go
+	$(GO_DIST) -o dist/price-http cmd/price-http/main.go
 
 build:
 	mkdir -p build
-	$(GO) build -o build/pricebroadcaster cmd/pricebroadcaster/main.go
+	$(GO) build -o build/price-publisher cmd/price-publisher/main.go
+	$(GO) build -o build/price-http cmd/price-http/main.go
 
 run-example-publisher:
 	go run cmd/price-publisher/main.go
