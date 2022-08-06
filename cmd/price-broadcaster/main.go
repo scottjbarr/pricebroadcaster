@@ -10,6 +10,7 @@ import (
 	"github.com/scottjbarr/pricebroadcaster/pkg/clients"
 	"github.com/scottjbarr/pricebroadcaster/pkg/models"
 	"github.com/scottjbarr/pricebroadcaster/pkg/publisher"
+	"github.com/scottjbarr/pricebroadcaster/pkg/service"
 	"github.com/scottjbarr/redis"
 )
 
@@ -21,37 +22,39 @@ func main() {
 
 	log.Printf("Starting with config %+v", cfg)
 
-	pool, err := redis.NewPool(cfg.RedisURL)
+	pool, err := redis.NewPoolWithBorrowFunc(cfg.RedisURL, redis.NoopOnBorrow)
 	if err != nil {
 		panic(err)
 	}
 
+	// build the minor dependencies
 	cache := cache.NewRedisCache(pool)
-	pub := publisher.NewRedisPublisher(pool)
+	pub := publisher.NewRedisPublisher(pool, cfg.Room)
+	broadcaster := broadcaster.NewWithCache(pub, cache)
 
-	broadcaster, err := broadcaster.New(cfg.Room, pub, cache)
-	if err != nil {
-		panic(err)
-	}
+	// the service that brings it all together
+	service := service.New(broadcaster)
 
 	ch := make(chan *models.OHLC, 1)
-
-	go func() {
-		broadcaster.Start(ch)
-	}()
 
 	// start fetching and pushing prices
 	c := clients.NewMockClient()
 	t := time.NewTicker(time.Second * 10)
 
-	for {
-		<-t.C
-		ohlc, err := c.Get("whatever")
-		if err != nil {
-			panic(err)
-		}
+	go func() {
+		for {
+			<-t.C
+			ohlc, err := c.Get("whatever")
+			if err != nil {
+				panic(err)
+			}
 
-		ch <- ohlc
+			ch <- ohlc
+		}
+	}()
+
+	if err := service.Run(ch); err != nil {
+		panic(err)
 	}
 }
 

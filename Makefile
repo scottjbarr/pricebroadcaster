@@ -6,20 +6,29 @@ GO_DIST = GOOS=linux GOARCH=amd64 go build
 
 .PHONY: dist build
 
-all: clean build
+all: clean build dist
 
-dist:
-	mkdir -p dist
-	$(GO_DIST) -o dist/price-publisher cmd/price-publisher/main.go
+prepare:
+	mkdir -p build dist
+
+dist: prepare dist-broadcaster dist-http
+
+dist-broadcaster:
+	$(GO_DIST) -o dist/price-broadcaster cmd/price-broadcaster/main.go
+
+dist-http:
 	$(GO_DIST) -o dist/price-http cmd/price-http/main.go
 
-build:
-	mkdir -p build
-	$(GO) build -o build/price-publisher cmd/price-publisher/main.go
+build: prepare build-broadcaster build-http
+
+build-broadcaster:
+	$(GO) build -o build/price-broadcaster cmd/price-broadcaster/main.go
+
+build-http:
 	$(GO) build -o build/price-http cmd/price-http/main.go
 
-run-example-publisher:
-	go run cmd/price-publisher/main.go
+run-example-broadcaster:
+	go run cmd/price-broadcaster/main.go
 
 run-example-http:
 	go run cmd/price-http/main.go
